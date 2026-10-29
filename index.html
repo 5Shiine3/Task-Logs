@@ -1,68 +1,184 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Log - Week 1 Complete</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #eaeaea;
-        }
-        
-        .container {
-            text-align: center;
-            padding: 2rem;
-        }
-        
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 1rem;
-            background: linear-gradient(90deg, #e94560, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        p {
-            font-size: 1.4rem;
-            opacity: 0.85;
-            font-weight: 400;
-        }
-        
-        .dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #e94560;
-            border-radius: 50%;
-            margin-left: 6px;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.8); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Log - Week 1 Complete</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+min-height: 100vh;
+display: flex;
+justify-content: center;
+padding: 40px 20px;
+color: #eaeaea;
+}
+
+.container {
+width: 100%;
+max-width: 480px;
+}
+
+h1 {
+font-size: 2.5rem;
+font-weight: 700;
+letter-spacing: -0.5px;
+margin-bottom: 1.5rem;
+text-align: center;
+background: linear-gradient(90deg, #e94560, #ff6b6b);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+.input-row {
+display: flex;
+gap: 10px;
+margin-bottom: 24px;
+}
+
+input[type="text"] {
+flex: 1;
+padding: 14px 16px;
+font-size: 16px;
+border: none;
+border-radius: 10px;
+background: rgba(255, 255, 255, 0.1);
+color: white;
+outline: none;
+}
+
+input[type="text"]::placeholder {
+color: rgba(255, 255, 255, 0.5);
+}
+
+button.add-btn {
+padding: 14px 20px;
+font-size: 16px;
+font-weight: 600;
+border: none;
+border-radius: 10px;
+background: #e94560;
+color: white;
+cursor: pointer;
+}
+
+button.add-btn:hover {
+background: #ff6b6b;
+}
+
+ul {
+list-style: none;
+}
+
+li {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 14px 16px;
+background: rgba(255, 255, 255, 0.08);
+border-radius: 10px;
+margin-bottom: 10px;
+}
+
+li.done span {
+text-decoration: line-through;
+opacity: 0.5;
+}
+
+input[type="checkbox"] {
+width: 18px;
+height: 18px;
+cursor: pointer;
+}
+
+li span {
+flex: 1;
+font-size: 16px;
+}
+
+.delete-btn {
+background: none;
+border: none;
+color: #ff6b6b;
+font-size: 20px;
+cursor: pointer;
+padding: 0 4px;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Task Log</h1>
-        <p>Coming soon<span class="dot"></span></p>
-    </div>
+<div class="container">
+<h1>Task Log</h1>
+
+<div class="input-row">
+<input type="text" id="taskInput" placeholder="Add a new task...">
+<button class="add-btn" onclick="addTask()">Add</button>
+</div>
+
+<ul id="taskList"></ul>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+function save() {
+localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function render() {
+const list = document.getElementById('taskList');
+list.innerHTML = '';
+
+tasks.forEach((task, i) => {
+const li = document.createElement('li');
+if (task.done) li.classList.add('done');
+
+li.innerHTML = `
+<input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggle(${i})">
+<span>${task.text}</span>
+<button class="delete-btn" onclick="remove(${i})">×</button>
+`;
+list.appendChild(li);
+});
+}
+
+function addTask() {
+const input = document.getElementById('taskInput');
+const text = input.value.trim();
+if (!text) return;
+
+tasks.push({ text: text, done: false });
+save();
+render();
+input.value = '';
+input.focus();
+}
+
+function toggle(i) {
+tasks[i].done = !tasks[i].done;
+save();
+render();
+}
+
+function remove(i) {
+tasks.splice(i, 1);
+save();
+render();
+}
+
+// Press Enter to add
+document.getElementById('taskInput').addEventListener('keypress', function(e) {
+if (e.key === 'Enter') addTask();
+});
+
+render();
+</script>
 </body>
 </html>
