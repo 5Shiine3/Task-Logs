@@ -125,60 +125,90 @@ padding: 0 4px;
 <ul id="taskList"></ul>
 </div>
 
-<script>
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+<script>let tasks = [];
 
-function save() {
-localStorage.setItem('tasks', JSON.stringify(tasks));
+async function loadTasks() {
+try {
+const res = await fetch('/api/tasks');
+tasks = await res.json();
+render();
+} catch (err) {
+console.error('Failed to load tasks', err);
+}
 }
 
 function render() {
 const list = document.getElementById('taskList');
 list.innerHTML = '';
 
-tasks.forEach((task, i) => {
+tasks.forEach((task) => {
 const li = document.createElement('li');
 if (task.done) li.classList.add('done');
 
 li.innerHTML = `
-<input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggle(${i})">
+<input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggle(${task.id}, this.checked)">
 <span>${task.text}</span>
-<button class="delete-btn" onclick="remove(${i})">×</button>
+<button class="delete-btn" onclick="remove(${task.id})">×</button>
 `;
 list.appendChild(li);
 });
 }
 
-function addTask() {
+async function addTask() {
 const input = document.getElementById('taskInput');
 const text = input.value.trim();
 if (!text) return;
 
-tasks.push({ text: text, done: false });
-save();
+try {
+const res = await fetch('/api/tasks', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ text })
+});
+const newTask = await res.json();
+tasks.unshift(newTask);
 render();
 input.value = '';
 input.focus();
+} catch (err) {
+console.error('Failed to add task', err);
+}
 }
 
-function toggle(i) {
-tasks[i].done = !tasks[i].done;
-save();
+async function toggle(id, done) {
+try {
+await fetch('/api/tasks', {
+method: 'PUT',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ id, done })
+});
+const task = tasks.find(t => t.id === id);
+if (task) task.done = done;
 render();
+} catch (err) {
+console.error('Failed to update task', err);
+}
 }
 
-function remove(i) {
-tasks.splice(i, 1);
-save();
+async function remove(id) {
+try {
+await fetch('/api/tasks', {
+method: 'DELETE',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ id })
+});
+tasks = tasks.filter(t => t.id !== id);
 render();
+} catch (err) {
+console.error('Failed to delete task', err);
+}
 }
 
-// Press Enter to add
 document.getElementById('taskInput').addEventListener('keypress', function(e) {
 if (e.key === 'Enter') addTask();
 });
 
-render();
+loadTasks();
 </script>
 </body>
 </html>
